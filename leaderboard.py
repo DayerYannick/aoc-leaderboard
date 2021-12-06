@@ -97,7 +97,8 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                         if verbose:
                             print(f"Found a cache file {int(time.time() - cache_t)}s")
                         if latest_cache_t != 0:
-                            print(f"Removing older cache file {int(time.time() - latest_cache_t)}s")
+                            if verbose:
+                                print(f"Removing older cache file {int(time.time() - latest_cache_t)}s")
                             from_file.unlink(missing_ok=True)
                         from_file = cache_file
                         latest_cache_t = cache_t
@@ -211,7 +212,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
     # Table
     for user, user_days in sorted(timestamps_struct.items(), key=sort_by_time_then_alpha):
         print(f"{user:{name_str_length}s}:", end="")
-        for day_i,(d,stars) in zip(range(len(seen_days)), sorted(user_days.items())):
+        for day_i in range(len(seen_days)):
             day = sorted(seen_days)[day_i]
             if display_day and day != display_day:
                 continue
@@ -219,10 +220,11 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 print(" " * time_length * 2, end="")
                 continue
             stars = user_days[day]
-            for s in sorted(stars.values(), key=lambda x:x):
-                if day not in user_days:
+            for s_i in [1,2]:#sorted(stars.items(), key=lambda x:x[1]):
+                if s_i not in user_days[day]:
                     print(" " * time_length, end="")
                     continue
+                s = stars[s_i]
                 if timestamps:
                     print(f" {s}", end="")
                 else:
