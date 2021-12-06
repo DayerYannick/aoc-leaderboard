@@ -89,7 +89,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 cache_t = int(cache_file.stem.split("_")[-1])
                 if int(time.time()) - cache_t > cache_timeout_s:
                     if verbose:
-                        print(f"Removing old cache file {int(time.time() - latest_cache_t)}s")
+                        print(f"Removing outdated cache file {int(time.time() - latest_cache_t)}s")
                     cache_file.unlink(missing_ok=True)
                     continue
                 else:
@@ -97,6 +97,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                         if verbose:
                             print(f"Found a cache file {int(time.time() - cache_t)}s")
                         if latest_cache_t != 0:
+                            print(f"Removing older cache file {int(time.time() - latest_cache_t)}s")
                             from_file.unlink(missing_ok=True)
                         from_file = cache_file
                         latest_cache_t = cache_t
@@ -198,9 +199,9 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
         print(stars_title_str)
 
 
-    BIG = 2**33 # Number over what epoch/2 can go
+    BIG = 2**33 # Number over max_epoch*2
 
-    def sorting(val: tuple[str, dict]):
+    def sort_by_time_then_alpha(val: tuple[str, dict]):
         if val[1] is None or sorting_day not in val[1]:
             return BIG + names.index(val[0])
         if sorting_star not in val[1][sorting_day]:
@@ -208,12 +209,20 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
         return val[1][sorting_day][sorting_star]
 
     # Table
-    for user, days in sorted(timestamps_struct.items(), key=sorting):
+    for user, user_days in sorted(timestamps_struct.items(), key=sort_by_time_then_alpha):
         print(f"{user:{name_str_length}s}:", end="")
-        for day,stars in sorted(days.items()):
+        for day_i,(d,stars) in zip(range(len(seen_days)), sorted(user_days.items())):
+            day = sorted(seen_days)[day_i]
             if display_day and day != display_day:
                 continue
+            if day not in user_days:
+                print(" " * time_length * 2, end="")
+                continue
+            stars = user_days[day]
             for s in sorted(stars.values(), key=lambda x:x):
+                if day not in user_days:
+                    print(" " * time_length, end="")
+                    continue
                 if timestamps:
                     print(f" {s}", end="")
                 else:
