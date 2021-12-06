@@ -229,7 +229,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                     print(f" {s}", end="")
                 else:
                     if s//3600:
-                        print(f" {s//3600:2d}:", end="")
+                        print(f"{s//3600:3d}:", end="")
                     else:
                         print("    ", end="")
                     if (s%3600)//60 or s//3600:
