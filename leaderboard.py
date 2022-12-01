@@ -4,6 +4,8 @@ import click
 import json
 import requests
 import time
+import datetime
+import pytz
 
 from typing import Union
 from pathlib import Path
@@ -14,7 +16,7 @@ from pathlib import Path
 @click.option("-s", "--sorting-star", type=click.Choice(["1", "2"]), default="1", help="Challenge star of the day to use to sort the table.")
 @click.option("-f", "--from-file", type=str, default=None, help="Use that file instead of the default loadint method (from url).")
 @click.option("-t", "--timestamps", is_flag=True, default=False, help="WIP display timestamps instead of completion times.")
-@click.option("-y", "--year", type=int, default=2021, help="WIP Retrieve a different challenge year.")
+@click.option("-y", "--year", type=int, default=2022, help="WIP Retrieve a different challenge year.")
 @click.option("-u", "--update", "ignore_cache", is_flag=True, default=False, help="Force updating the local cache from the AOC website. (use parsimoniously)")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Make the program more talkative.")
 @click.option("-p", "--private-key", type=str, default=None, help="Key of the private leaderboard to fetch. If not provided and not available in 'leaderboard_key.txt', you will be prompted for it.")
@@ -146,7 +148,8 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
         )
         exit(-1)
 
-    day1 = 1638334800 # TODO adaptive to year
+    startdaytime = datetime.datetime(year, 12, 1, 6, 0, 0, 0,tzinfo=pytz.timezone('CET'))
+    day1 = int(startdaytime.timestamp())
     days_timestamps = {d+1:day1+d*24*3600 for d in range(25)}
 
     timestamps_struct = {}
