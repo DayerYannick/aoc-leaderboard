@@ -18,7 +18,7 @@ DEFAULT_YEAR = CURRENT_DATE.year - (1 if CURRENT_DATE.month != 11 else 0)
 @click.option("-d", "--display-day", type=int, default=None, help="Challenge day to display in the table. (not passing this argument will try to display all the days)")
 @click.option("--sorting-day", type=int, default=None, help="Challenge day to use to sort the multi-day table.")
 @click.option("-s", "--sorting-star", type=click.Choice(["1", "2"]), default="1", help="Challenge star of the day to use to sort the table.")
-@click.option("-f", "--from-file", type=str, default=None, help="Use that file instead of the default loadint method (from url).")
+@click.option("-f", "--from-file", type=str, default=None, help="Use that file instead of the default loading method (from url).")
 @click.option("-t", "--timestamps", is_flag=True, default=False, help="WIP display timestamps instead of completion times.")
 @click.option("-y", "--year", type=int, default=DEFAULT_YEAR, help="Retrieve a different challenge year.")
 @click.option("-u", "--update", "ignore_cache", is_flag=True, default=False, help="Force updating the local cache from the AOC website. (use parsimoniously)")
@@ -110,7 +110,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                         latest_cache_t = cache_t
         except Exception as e:
             if verbose:
-                print(f"WARNING: unable to retrieve the scores from cache.")
+                print("WARNING: unable to retrieve the scores from cache.")
                 print(e)
         if verbose and from_file:
             cache_age = int(time.time() - latest_cache_t)
@@ -192,6 +192,18 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
     name_str_length = max(len(n) for n in names)
     time_length = 11 if timestamps else 9
 
+
+    BIG = 2**33 # Number over max_epoch*2
+
+    def sort_by_time_then_alpha(val: tuple[str, dict]):
+        if val[1] is None or sorting_day not in val[1]:
+            return BIG + names.index(val[0])
+        if sorting_star not in val[1][sorting_day]:
+            return BIG/2 + val[1][sorting_day][3-sorting_star]
+        return val[1][sorting_day][sorting_star]
+
+
+    # TODO display x days per row
     # Titles
     if display_day:
         day_title = f"day {display_day}"
@@ -206,16 +218,6 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
         print(day_title_str)
         print(stars_title_str)
 
-
-    BIG = 2**33 # Number over max_epoch*2
-
-    def sort_by_time_then_alpha(val: tuple[str, dict]):
-        if val[1] is None or sorting_day not in val[1]:
-            return BIG + names.index(val[0])
-        if sorting_star not in val[1][sorting_day]:
-            return BIG/2 + val[1][sorting_day][3-sorting_star]
-        return val[1][sorting_day][sorting_star]
-
     # Table
     for user, user_days in sorted(timestamps_struct.items(), key=sort_by_time_then_alpha):
         print(f"{user:{name_str_length}s}:", end="")
@@ -227,7 +229,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 print(" " * time_length * 2, end="")
                 continue
             stars = user_days[day]
-            for s_i in [1,2]:#sorted(stars.items(), key=lambda x:x[1]):
+            for s_i in [1,2]:
                 if s_i not in user_days[day]:
                     print(" " * time_length, end="")
                     continue
