@@ -11,7 +11,7 @@ from typing import Union
 from pathlib import Path
 
 CURRENT_DATE = datetime.date.today()
-DEFAULT_YEAR = CURRENT_DATE.year - (1 if CURRENT_DATE.month != 11 else 0)
+DEFAULT_YEAR = CURRENT_DATE.year - (1 if CURRENT_DATE.month != 12 else 0)
 
 
 @click.command("leaderboard", context_settings=dict(help_option_names=['-h', '--help']))
