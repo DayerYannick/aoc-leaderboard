@@ -235,6 +235,9 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 if timestamps:
                     print(f" {s}", end="")
                 else:
+                    if s > (23 * 3600 + 59 * 60 + 59):
+                        print( f" {s//(24*3600):3d}d {(s%(24*3600))//3600:02d}h", end="")
+                        continue
                     if s//3600:
                         print(f"{s//3600:3d}:", end="")
                     else:
