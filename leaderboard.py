@@ -283,6 +283,10 @@ def leaderboard(
 
     names = sorted(names, key=lambda x: x.lower()) + sorted(anonymous)
 
+    if len(seen_days) < 1:
+        print("No scores were found. Have you selected a date in the future?")
+        exit(-1)
+
     sorting_day = display_day or sorting_day or max(seen_days)
 
     if verbose:
