@@ -1,35 +1,117 @@
 #!/usr/bin/env python
 
-import click
-import json
-import requests
-import time
 import datetime
-import pytz
-
-from typing import Union
+import json
+import time
 from pathlib import Path
+from typing import Union
+
+import click
+import pytz
+import requests
 
 CURRENT_DATE = datetime.date.today()
 DEFAULT_YEAR = CURRENT_DATE.year - (1 if CURRENT_DATE.month != 12 else 0)
 
 
-@click.command("leaderboard", context_settings=dict(help_option_names=['-h', '--help']))
-@click.option("-d", "--display-day", type=int, default=None, help="Challenge day to display in the table. (not passing this argument will try to display all the days)")
-@click.option("--sorting-day", type=int, default=None, help="Challenge day to use to sort the multi-day table.")
-@click.option("-s", "--sorting-star", type=click.Choice(["1", "2"]), default="1", help="Challenge star of the day to use to sort the table.")
-@click.option("-f", "--from-file", type=str, default=None, help="Use that file instead of the default loading method (from url).")
-@click.option("-t", "--timestamps", is_flag=True, default=False, help="WIP display timestamps instead of completion times.")
-@click.option("-y", "--year", type=int, default=DEFAULT_YEAR, help="Retrieve a different challenge year.")
-@click.option("-u", "--update", "ignore_cache", is_flag=True, default=False, help="Force updating the local cache from the AOC website. (use parsimoniously)")
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Make the program more talkative.")
-@click.option("-p", "--private-key", type=str, default=None, help="Key of the private leaderboard to fetch. If not provided and not available in 'leaderboard_key.txt', you will be prompted for it.")
-@click.option("-c", "--cookie-key", "session_cookie", type=str, default=None, help="Your session cookie. If not provided and not available in 'session_cookie.txt', you will be prompted for it.")
-def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file: Union[str, None], year: int, timestamps: bool, ignore_cache: bool, private_key: str, session_cookie: Union[str, None], verbose: bool):
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.option(
+    "-d",
+    "--display-day",
+    type=int,
+    default=None,
+    help=(
+        "Challenge day to display in the table. (not passing this argument will try to "
+        "display all the days)"
+    ),
+)
+@click.option(
+    "--sorting-day",
+    type=int,
+    default=None,
+    help="Challenge day to use to sort the multi-day table.",
+)
+@click.option(
+    "-s",
+    "--sorting-star",
+    type=click.Choice(["1", "2"]),
+    default="1",
+    help="Challenge star of the day to use to sort the table.",
+)
+@click.option(
+    "-f",
+    "--from-file",
+    type=str,
+    default=None,
+    help="Use that file instead of the default loading method (from url).",
+)
+@click.option(
+    "-t",
+    "--timestamps",
+    is_flag=True,
+    default=False,
+    help="WIP display timestamps instead of completion times.",
+)
+@click.option(
+    "-y",
+    "--year",
+    type=int,
+    default=DEFAULT_YEAR,
+    help="Retrieve a different challenge year.",
+)
+@click.option(
+    "-u",
+    "--update",
+    "ignore_cache",
+    is_flag=True,
+    default=False,
+    help=("Force updating the local cache from the AOC website (use parsimoniously)."),
+)
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Make the program more talkative.",
+)
+@click.option(
+    "-p",
+    "--private-key",
+    type=str,
+    default=None,
+    help=(
+        "Key of the private leaderboard to fetch. If not provided and not available in "
+        "'leaderboard_key.txt', you will be prompted for it."
+    ),
+)
+@click.option(
+    "-c",
+    "--cookie-key",
+    "session_cookie",
+    type=str,
+    default=None,
+    help=(
+        "Your session cookie. If not provided and not available in "
+        "'session_cookie.txt', you will be prompted for it."
+    ),
+)
+def leaderboard(
+    display_day: int,
+    sorting_day: int,
+    sorting_star: int,
+    from_file: Union[str, None],
+    year: int,
+    timestamps: bool,
+    ignore_cache: bool,
+    private_key: str,
+    session_cookie: Union[str, None],
+    verbose: bool,
+):
     """Displays an Advent of Code leaderboard in CLI.
 
-    Tries to load a previously saved cache file of the leaderboard (valid 15 minutes),
-    Then, if needed, tries to get the leaderboard from the website.
+    Tries to load a previously saved cache file of the leaderboard
+    (valid 15 minutes), Then, if needed, tries to get the leaderboard
+    from the website.
 
     If a file is specified, uses that instead.
     """
@@ -46,11 +128,13 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
             if verbose:
                 print(e)
             print(
-                "WARNING: Could not read your session cookie.\nPlease retrieve it:\n"
-                "- Open the developer tools in your browser (F12),\n- Navigate to the "
-                "cookies section while logged on a page of the AOC website.\n- Find the "
-                "cookie named 'session' (look for the 'storage' tab in Firefox, or "
-                "'Application' -> 'Cookies' in Chrome) and copy it (it should be a long "
+                "WARNING: Could not read your session cookie.\n"
+                "Please retrieve it:\n"
+                "- Open the developer tools in your browser (F12),\n"
+                "- Navigate to the cookies section while logged on a page of the AOC "
+                "website. (look for the 'storage' tab in Firefox, or 'Application' -> "
+                "'Cookies' in Chrome)\n"
+                "- Find the cookie named 'session' and copy it (it should be a long "
                 "string of characters and numbers).\n"
             )
             session_cookie = input("Paste your session cookie here:")
@@ -90,21 +174,31 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
             print("Loading from cache...")
         try:
             latest_cache_t = 0
-            sorted_cache_files = sorted(Path().glob(f"leaderboard_{year}_{private_key}_cache_*.json"))
+            sorted_cache_files = sorted(
+                Path().glob(f"leaderboard_{year}_{private_key}_cache_*.json")
+            )
             for cache_file in sorted_cache_files:
                 cache_t = int(cache_file.stem.split("_")[-1])
                 if int(time.time()) - cache_t > cache_timeout_s:
                     if verbose:
-                        print(f"Removing outdated cache file {int(time.time() - latest_cache_t)}s")
+                        print(
+                            "Removing outdated cache file "
+                            f"{int(time.time() - latest_cache_t)}s"
+                        )
                     cache_file.unlink(missing_ok=True)
                     continue
                 else:
                     if cache_t > latest_cache_t:
                         if verbose:
-                            print(f"Found a cache file {int(time.time() - cache_t)}s")
+                            print(
+                                f"Found a cache file {int(time.time() - cache_t)}s old"
+                            )
                         if latest_cache_t != 0:
                             if verbose:
-                                print(f"Removing older cache file {int(time.time() - latest_cache_t)}s")
+                                print(
+                                    "Removing older cache file "
+                                    f"{int(time.time() - latest_cache_t)}s old"
+                                )
                             from_file.unlink(missing_ok=True)
                         from_file = cache_file
                         latest_cache_t = cache_t
@@ -114,11 +208,11 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 print(e)
         if verbose and from_file:
             cache_age = int(time.time() - latest_cache_t)
-            print(
-                f"Cache is up to date. ({cache_age}/{cache_timeout_s} seconds old)"
-            )
+            print(f"Cache is up to date. ({cache_age}/{cache_timeout_s} seconds old)")
 
-    leaderboard_url = f"https://adventofcode.com/{year}/leaderboard/private/view/{private_key}.json"
+    leaderboard_url = (
+        f"https://adventofcode.com/{year}/leaderboard/private/view/{private_key}.json"
+    )
     if not from_file:
         if verbose:
             print(f"Requesting leaderboard from {leaderboard_url}...")
@@ -128,17 +222,23 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                     s.cookies.set("session", session_cookie)
                     resp = s.get(leaderboard_url)
                     leaderboard = resp.json()
-                    with open(f"leaderboard_{year}_{private_key}_cache_{int(time.time())}.json", "w") as f:
+                    with open(
+                        f"leaderboard_{year}_{private_key}_cache_"
+                        f"{int(time.time())}.json",
+                        "w",
+                    ) as f:
                         json.dump(leaderboard, f)
         except Exception as e:
             print(
-                f"ERROR: unable to retrieve the scores from {leaderboard_url}. "
-                "(-v) for more."
+                f"ERROR: unable to retrieve the scores from {leaderboard_url}. (-v) "
+                "for more."
             )
             print(
-                "    Maybe your session cookie is outdated (should last about a month) "
-                "or invalid? Workaround: delete the 'session-cookie.txt' file."
-            )  # TODO detect that (if response is the unlogged-in AOC leaderboard page) and ask for new cookie
+                "    Maybe your session cookie is outdated (should last for about a "
+                "month) or invalid? Workaround: delete the 'session-cookie.txt' file."
+            )
+            # TODO detect that (if response is "not logged-in AOC leaderboard" page) and
+            # ask for new cookie
             if verbose:
                 print(e)
     else:
@@ -152,9 +252,11 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
         )
         exit(-1)
 
-    startdaytime = datetime.datetime(year, 12, 1, 6, 0, 0, 0,tzinfo=pytz.timezone('CET'))
+    startdaytime = datetime.datetime(
+        year, 12, 1, 6, 0, 0, 0, tzinfo=pytz.timezone("CET")
+    )
     day1 = int(startdaytime.timestamp())
-    days_timestamps = {d+1:day1+d*24*3600 for d in range(25)}
+    days_timestamps = {d + 1: day1 + d * 24 * 3600 for d in range(25)}
 
     timestamps_struct = {}
     names = []
@@ -174,11 +276,9 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
             if day not in seen_days:
                 seen_days.append(day)
             timestamps_struct[name][day] = {}
-            for i,s in stars.items():
-                timestamps_struct[name][day][int(i)] = (
-                    s["get_star_ts"] - (
-                        days_timestamps[day] if not timestamps else 0
-                    )
+            for i, s in stars.items():
+                timestamps_struct[name][day][int(i)] = s["get_star_ts"] - (
+                    days_timestamps[day] if not timestamps else 0
                 )
 
     names = sorted(names, key=lambda x: x.lower()) + sorted(anonymous)
@@ -188,38 +288,58 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
     if verbose:
         print(f"Sorting by time of day {sorting_day} and star {sorting_star}.")
 
-
     name_str_length = max(len(n) for n in names)
     time_length = 11 if timestamps else 9
 
-
-    BIG = 2**33 # Number over max_epoch*2
+    BIG = 2**33  # Number over max_epoch*2
 
     def sort_by_time_then_alpha(val: tuple[str, dict]):
         if val[1] is None or sorting_day not in val[1]:
             return BIG + names.index(val[0])
         if sorting_star not in val[1][sorting_day]:
-            return BIG/2 + val[1][sorting_day][3-sorting_star]
+            return BIG / 2 + val[1][sorting_day][3 - sorting_star]
         return val[1][sorting_day][sorting_star]
-
 
     # TODO display x days per row
     # Titles
     if display_day:
         day_title = f"day {display_day}"
-        print(" "*(name_str_length+1+(time_length*2-len(day_title))//2+1) + day_title)
-        print(" "*(name_str_length+1+(time_length-len("star x"))//2+1) + "star 1" + " "*((time_length-len("star x"))) + "star 2")
+        print(
+            " " * (name_str_length + 1 + (time_length * 2 - len(day_title)) // 2 + 1)
+            + day_title
+        )
+        print(
+            " " * (name_str_length + 1 + (time_length - len("star x")) // 2 + 1)
+            + "star 1"
+            + " " * ((time_length - len("star x")))
+            + "star 2"
+        )
     else:
-        day_title_str = " "*(name_str_length+1+(time_length*2-len("day 1"))//2+1) + "day 1"
-        stars_title_str = " "*(name_str_length+1+(time_length-len("star 1"))//2+1) + "star 1" + " "*((time_length-len("star 2"))) + "star 2"
+        day_title_str = (
+            " " * (name_str_length + 1 + (time_length * 2 - len("day 1")) // 2 + 1)
+            + "day 1"
+        )
+        stars_title_str = (
+            " " * (name_str_length + 1 + (time_length - len("star 1")) // 2 + 1)
+            + "star 1"
+            + " " * ((time_length - len("star 2")))
+            + "star 2"
+        )
         for d in sorted(seen_days)[1:]:
-            day_title_str += " "*(time_length*2-len(f"day {d}")) + f"day {d}"
-            stars_title_str += " "*((time_length-len("star 1"))) + "star 1" + " "*((time_length-len("star 2"))) + "star 2"
+            day_title_str += " " * (time_length * 2 - len(f"day {d}")) + f"day {d}"
+            stars_title_str += (
+                " " * ((time_length - len("star 1")))
+                + "star 1"
+                + " " * ((time_length - len("star 2")))
+                + "star 2"
+            )
         print(day_title_str)
         print(stars_title_str)
 
     # Table
-    for user, user_days in sorted(timestamps_struct.items(), key=sort_by_time_then_alpha):
+    for user, user_days in sorted(
+        timestamps_struct.items(), key=sort_by_time_then_alpha
+    ):
         print(f"{user:{name_str_length}s}:", end="")
         for day_i in range(len(seen_days)):
             day = sorted(seen_days)[day_i]
@@ -229,7 +349,7 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                 print(" " * time_length * 2, end="")
                 continue
             stars = user_days[day]
-            for s_i in [1,2]:
+            for s_i in [1, 2]:
                 if s_i not in user_days[day]:
                     print(" " * time_length, end="")
                     continue
@@ -238,17 +358,21 @@ def leaderboard(display_day: int, sorting_day: int, sorting_star: int, from_file
                     print(f" {s}", end="")
                 else:
                     if s > (23 * 3600 + 59 * 60 + 59):
-                        print( f" {s//(24*3600):3d}d {(s%(24*3600))//3600:02d}h", end="")
+                        print(
+                            f" {s // (24 * 3600):3d}d "
+                            f"{(s % (24 * 3600))//3600:02d}h",
+                            end="",
+                        )
                         continue
-                    if s//3600:
-                        print(f"{s//3600:3d}:", end="")
+                    if s // 3600:
+                        print(f"{s // 3600:3d}:", end="")
                     else:
                         print("    ", end="")
-                    if (s%3600)//60 or s//3600:
-                        print(f"{(s%3600)//60:02d}:", end="")
+                    if (s % 3600) // 60 or s // 3600:
+                        print(f"{(s % 3600) // 60:02d}:", end="")
                     else:
                         print("    ", end="")
-                    print(f"{(s%3600)%60:02d}", end="")
+                    print(f"{(s % 3600) % 60:02d}", end="")
         print()
 
 
