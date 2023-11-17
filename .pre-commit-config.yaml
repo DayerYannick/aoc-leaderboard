@@ -24,7 +24,6 @@ repos:
       - id: check-added-large-files
       - id: check-toml
       - id: check-yaml
-        exclude: conda/meta.yaml
       - id: debug-statements
       - id: check-case-conflict
       - id: trailing-whitespace
