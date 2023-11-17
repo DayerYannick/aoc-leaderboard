@@ -10,13 +10,17 @@ import pytz
 from typing import Union
 from pathlib import Path
 
+CURRENT_DATE = datetime.date.today()
+DEFAULT_YEAR = CURRENT_DATE.year - (1 if CURRENT_DATE.month != 11 else 0)
+
+
 @click.command("leaderboard", context_settings=dict(help_option_names=['-h', '--help']))
 @click.option("-d", "--display-day", type=int, default=None, help="Challenge day to display in the table. (not passing this argument will try to display all the days)")
 @click.option("--sorting-day", type=int, default=None, help="Challenge day to use to sort the multi-day table.")
 @click.option("-s", "--sorting-star", type=click.Choice(["1", "2"]), default="1", help="Challenge star of the day to use to sort the table.")
 @click.option("-f", "--from-file", type=str, default=None, help="Use that file instead of the default loadint method (from url).")
 @click.option("-t", "--timestamps", is_flag=True, default=False, help="WIP display timestamps instead of completion times.")
-@click.option("-y", "--year", type=int, default=2022, help="WIP Retrieve a different challenge year.")
+@click.option("-y", "--year", type=int, default=DEFAULT_YEAR, help="Retrieve a different challenge year.")
 @click.option("-u", "--update", "ignore_cache", is_flag=True, default=False, help="Force updating the local cache from the AOC website. (use parsimoniously)")
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Make the program more talkative.")
 @click.option("-p", "--private-key", type=str, default=None, help="Key of the private leaderboard to fetch. If not provided and not available in 'leaderboard_key.txt', you will be prompted for it.")
